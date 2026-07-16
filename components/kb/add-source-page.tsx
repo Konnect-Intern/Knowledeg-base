@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useRef } from "react"
-import { Globe, Upload, Headphones, Clock, ChevronDown, ArrowLeft, FolderOpen, Check, Plus,X } from "lucide-react"
+import { Globe, Upload, Headphones, Clock, ChevronDown, ArrowLeft, FolderOpen, Check, Plus, X } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { ScrollArea } from "@/components/ui/scroll-area"
@@ -81,6 +81,7 @@ interface AddSourcePageProps {
     url: string
     type: "WEBSITE" | "FILES" | "HELPDESK"
     category: string
+    schedule: string
   }) => void
 }
 
@@ -97,6 +98,11 @@ export function AddSourcePage({ onBack, onAdd, category }: AddSourcePageProps) {
   const [selectedPlatform, setSelectedPlatform] = useState("")
   const [dragOver, setDragOver] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
+
+  // 🌟 Scheduling States
+  const [syncTime, setSyncTime] = useState("00:00") // Native time input format (HH:mm)
+  const [syncDay, setSyncDay] = useState("Monday")
+  const [syncDate, setSyncDate] = useState("1")
 
   // Category States (Now integrated into the form)
   // Change to a managed state so it can update
@@ -125,23 +131,29 @@ export function AddSourcePage({ onBack, onAdd, category }: AddSourcePageProps) {
 
     const finalCategory = isCreatingNew ? newCategoryName.trim() : selectedCategory
 
-    // 🌟 NEW: Add the new category to the list if it's new
     if (isCreatingNew && finalCategory && !categoryList.includes(finalCategory)) {
       setCategoryList((prev) => [...prev, finalCategory].sort());
     }
+
+    // Determine the exact string to save for the schedule configuration
+    let scheduleConfig = syncSchedule;
+    if (syncSchedule === "daily") scheduleConfig = `daily_at_${syncTime}`;
+    if (syncSchedule === "weekly") scheduleConfig = `weekly_on_${syncDay}_at_${syncTime}`;
+    if (syncSchedule === "monthly") scheduleConfig = `monthly_on_${syncDate}_at_${syncTime}`;
 
     onAdd({
       name: "Source",
       url: websiteUrl,
       type: activeTab,
-      category: finalCategory
+      category: finalCategory,
+      schedule: scheduleConfig // 🌟 Send the structured schedule string to your backend
     })
   }
 
   const submitLabel = activeTab === "WEBSITE" ? "Add website" : activeTab === "FILES" ? "Add files" : "Add helpdesk"
 
   return (
-   <div className="h-full w-full max-w-6xl mx-auto py-6 px-8 flex flex-col">
+    <div className="h-full w-full max-w-6xl mx-auto py-6 px-8 flex flex-col">
       {/* Back button */}
       <button
         onClick={onBack}
@@ -208,79 +220,79 @@ export function AddSourcePage({ onBack, onAdd, category }: AddSourcePageProps) {
         </div>
 
         {/* 🌟 ROW 2: Category (Moved to top) */}
- {!category && (
-  <div className="grid grid-cols-1 md:grid-cols-3 gap-6 p-4">
-    <div className="md:col-span-1">
-      <h3 className="text-sm font-semibold text-foreground">Category</h3>
-    </div>
-    <div className="md:col-span-2">
-      {isCreatingNew ? (
-        // 🌟 Input field mode
-        <div className="flex gap-2 max-w-sm">
-          <Input
-            autoFocus
-            placeholder="Enter category name..."
-            className="h-9"
-            value={newCategoryName}
-            onChange={(e) => setNewCategoryName(e.target.value)}
-          />
-          <Button
-            className="h-9 bg-[oklch(0.648_0.2_131.684)] hover:bg-[oklch(0.58_0.2_131.684)] text-white"
-            onClick={() => {
-              if (newCategoryName && !categoryList.includes(newCategoryName)) {
-                setCategoryList([...categoryList, newCategoryName].sort());
-                setSelectedCategory(newCategoryName);
-                setIsCreatingNew(false);
-                setNewCategoryName("");
-              }
-            }}
-          >
-            Add
-          </Button>
-          <Button variant="ghost" className="h-9 px-2" onClick={() => setIsCreatingNew(false)}>
-            <X className="size-4" />
-          </Button>
-        </div>
-      ) : (
-        // 🌟 Dropdown mode
-        <div className="relative w-full max-w-sm">
-          <button
-            type="button"
-            onClick={() => setCategoryOpen(!categoryOpen)}
-            className="w-full flex items-center justify-between h-9 px-3 rounded-md border border-border bg-background text-sm shadow-sm hover:border-muted-foreground"
-          >
-            <span className="truncate">{selectedCategory || "Select or create category..."}</span>
-            <ChevronDown className="size-4 opacity-50" />
-          </button>
-
-          {categoryOpen && (
-            <div className="absolute z-50 top-full mt-1 left-0 right-0 bg-popover border border-border rounded-md shadow-xl max-h-[200px] overflow-hidden">
-              <ScrollArea className="h-full">
-                <div className="p-1">
-                  {categoryList.map((cat) => (
-                    <button
-                      key={cat}
-                      onClick={() => { setSelectedCategory(cat); setCategoryOpen(false); }}
-                      className="w-full text-left px-2 py-1.5 text-sm rounded hover:bg-muted"
-                    >
-                      {cat}
-                    </button>
-                  ))}
-                  <button
-                    onClick={() => { setIsCreatingNew(true); setCategoryOpen(false); }}
-                    className="w-full text-left px-2 py-1.5 text-sm text-[oklch(0.648_0.2_131.684)] font-medium hover:bg-muted"
-                  >
-                    <Plus className="size-3.5 inline mr-2" /> Create new
-                  </button>
-                </div>
-              </ScrollArea>
+        {!category && (
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 p-4">
+            <div className="md:col-span-1">
+              <h3 className="text-sm font-semibold text-foreground">Category</h3>
             </div>
-          )}
-        </div>
-      )}
-    </div>
-  </div>
-)}
+            <div className="md:col-span-2">
+              {isCreatingNew ? (
+                // 🌟 Input field mode
+                <div className="flex gap-2 max-w-sm">
+                  <Input
+                    autoFocus
+                    placeholder="Enter category name..."
+                    className="h-9"
+                    value={newCategoryName}
+                    onChange={(e) => setNewCategoryName(e.target.value)}
+                  />
+                  <Button
+                    className="h-9 bg-[oklch(0.648_0.2_131.684)] hover:bg-[oklch(0.58_0.2_131.684)] text-white"
+                    onClick={() => {
+                      if (newCategoryName && !categoryList.includes(newCategoryName)) {
+                        setCategoryList([...categoryList, newCategoryName].sort());
+                        setSelectedCategory(newCategoryName);
+                        setIsCreatingNew(false);
+                        setNewCategoryName("");
+                      }
+                    }}
+                  >
+                    Add
+                  </Button>
+                  <Button variant="ghost" className="h-9 px-2" onClick={() => setIsCreatingNew(false)}>
+                    <X className="size-4" />
+                  </Button>
+                </div>
+              ) : (
+                // 🌟 Dropdown mode
+                <div className="relative w-full max-w-sm">
+                  <button
+                    type="button"
+                    onClick={() => setCategoryOpen(!categoryOpen)}
+                    className="w-full flex items-center justify-between h-9 px-3 rounded-md border border-border bg-background text-sm shadow-sm hover:border-muted-foreground"
+                  >
+                    <span className="truncate">{selectedCategory || "Select or create category..."}</span>
+                    <ChevronDown className="size-4 opacity-50" />
+                  </button>
+
+                  {categoryOpen && (
+                    <div className="absolute z-50 top-full mt-1 left-0 right-0 bg-popover border border-border rounded-md shadow-xl max-h-[200px] overflow-hidden">
+                      <ScrollArea className="h-full">
+                        <div className="p-1">
+                          {categoryList.map((cat) => (
+                            <button
+                              key={cat}
+                              onClick={() => { setSelectedCategory(cat); setCategoryOpen(false); }}
+                              className="w-full text-left px-2 py-1.5 text-sm rounded hover:bg-muted"
+                            >
+                              {cat}
+                            </button>
+                          ))}
+                          <button
+                            onClick={() => { setIsCreatingNew(true); setCategoryOpen(false); }}
+                            className="w-full text-left px-2 py-1.5 text-sm text-[oklch(0.648_0.2_131.684)] font-medium hover:bg-muted"
+                          >
+                            <Plus className="size-3.5 inline mr-2" /> Create new
+                          </button>
+                        </div>
+                      </ScrollArea>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          </div>
+        )}
         {/* ── WEBSITE CONFIGURATION ROWS ── */}
         {activeTab === "WEBSITE" && (
           <>
@@ -434,14 +446,78 @@ export function AddSourcePage({ onBack, onAdd, category }: AddSourcePageProps) {
           </div>
         )}
 
-        {/* ── SHARED: SYNC SCHEDULE ROW ── */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 p-5">
-          <div className="md:col-span-1 space-y-1">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 p-4 border-t-0">
+
+          {/* Left Column: Label */}
+          <div className="md:col-span-1 flex items-center">
             <h3 className="text-sm font-semibold text-foreground">Sync Schedule</h3>
-            <p className="text-xs text-muted-foreground pr-4">How often should we check this source for updates?</p>
           </div>
-          <div className="md:col-span-2 flex items-center">
-            <SyncScheduleSelect value={syncSchedule} onChange={setSyncSchedule} open={syncOpen} setOpen={setSyncOpen} />
+
+          {/* Right Column: Inputs */}
+          <div className="md:col-span-2">
+            <div className="flex items-center gap-3 w-full">
+
+              {/* Main Schedule Selector */}
+              <select
+                value={syncSchedule}
+                onChange={(e) => setSyncSchedule(e.target.value)}
+                className="h-9 px-3 rounded-md border border-border bg-background text-sm min-w-[130px] shrink-0 focus:outline-none focus:ring-2 focus:ring-[oklch(0.648_0.2_131.684)]"
+              >
+                <option value="manual">Manual sync</option>
+                <option value="daily">Daily</option>
+                <option value="weekly">Weekly</option>
+                <option value="monthly">Monthly</option>
+              </select>
+
+              {/* Daily Inputs */}
+              {syncSchedule === "daily" && (
+                <div className="flex items-center gap-3 animate-in fade-in slide-in-from-left-2 duration-200 whitespace-nowrap">
+                  <span className="text-sm text-muted-foreground shrink-0">at</span>
+                  <Input
+                    type="time"
+                    value={syncTime}
+                    onChange={(e) => setSyncTime(e.target.value)}
+                    className="w-[120px] h-9 shrink-0"
+                  />
+                </div>
+              )}
+
+              {/* Weekly Inputs */}
+              {syncSchedule === "weekly" && (
+                <div className="flex items-center gap-3 animate-in fade-in slide-in-from-left-2 duration-200 whitespace-nowrap">
+                  <span className="text-sm text-muted-foreground shrink-0">on</span>
+                  <select
+                    value={syncDay}
+                    onChange={(e) => setSyncDay(e.target.value)}
+                    className="h-9 px-3 rounded-md border border-border bg-background text-sm shrink-0"
+                  >
+                    {["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"].map(d => (
+                      <option key={d} value={d}>{d}</option>
+                    ))}
+                  </select>
+                  <span className="text-sm text-muted-foreground shrink-0">at</span>
+                  <Input type="time" value={syncTime} onChange={(e) => setSyncTime(e.target.value)} className="w-[120px] h-9 shrink-0" />
+                </div>
+              )}
+
+              {/* Monthly Inputs */}
+              {syncSchedule === "monthly" && (
+                <div className="flex items-center gap-3 animate-in fade-in slide-in-from-left-2 duration-200 whitespace-nowrap">
+                  <span className="text-sm text-muted-foreground shrink-0">on day</span>
+                  <select
+                    value={syncDate}
+                    onChange={(e) => setSyncDate(e.target.value)}
+                    className="h-9 px-3 pr-8 rounded-md border border-border bg-background text-sm shrink-0"
+                  >
+                    {Array.from({ length: 31 }, (_, i) => i + 1).map(d => (
+                      <option key={d} value={d}>{d}</option>
+                    ))}
+                  </select>
+                  <span className="text-sm text-muted-foreground shrink-0">at</span>
+                  <Input type="time" value={syncTime} onChange={(e) => setSyncTime(e.target.value)} className="w-[120px] h-9 shrink-0" />
+                </div>
+              )}
+            </div>
           </div>
         </div>
 
