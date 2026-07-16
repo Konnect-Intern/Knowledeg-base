@@ -164,7 +164,8 @@ export function CategoryList({ onSelectCategory, onSelectSource, onBack }: Categ
       category={category}
       sources={sources}
       onViewAll={() => onSelectCategory(category)}
-      onSelectSource={(sourceId) => onSelectSource(sourceId,category)} // 🌟 Routes straight to the detail page
+      onSelectSource={(sourceId) => onSelectSource(sourceId, category)}
+      onSelectCategory={() => onSelectCategory(category)}
     />
   ))}
 </div>

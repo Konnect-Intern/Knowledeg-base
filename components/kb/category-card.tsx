@@ -8,6 +8,7 @@ interface CategoryCardProps {
   sources: KbSource[]
   onViewAll: () => void
   onSelectSource: (sourceId: number) => void
+  onSelectCategory?: () => void
 }
 
 const CATEGORY_DESCRIPTIONS = {
@@ -23,6 +24,7 @@ export function CategoryCard({
   sources,
   onViewAll,
   onSelectSource,
+  onSelectCategory,
 }: CategoryCardProps) {
   const maxVisible = 3
   const visibleSources = sources.slice(0, maxVisible)
@@ -33,7 +35,10 @@ export function CategoryCard({
     <div className="h-[260px] p-5 rounded-xl border border-border bg-card hover:border-[oklch(0.648_0.2_131.684)] hover:shadow-sm transition-all flex flex-col">
       
       {/* Header: Folder icon + name + description */}
-      <div className="flex items-start gap-3 mb-4">
+      <button 
+        onClick={onSelectCategory}
+        className="flex items-start gap-3 mb-4 w-full text-left hover:opacity-80 transition-opacity"
+      >
         <div className="flex-shrink-0 mt-0.5">
           <Folder className="w-5 h-5 text-[oklch(0.648_0.2_131.684)]" strokeWidth={2.5} />
         </div>
@@ -41,7 +46,7 @@ export function CategoryCard({
           <h3 className="text-sm font-bold text-foreground">{category}</h3>
           <p className="text-xs text-muted-foreground mt-1 line-clamp-1">{description}</p>
         </div>
-      </div>
+      </button>
 
       {/* Sources label */}
       <p className="text-xs font-medium text-muted-foreground mb-3">Sources ({sources.length})</p>

@@ -91,6 +91,7 @@ function PageContent() {
           {view.type === "knowledge-base-categories" && (
             <CategoryList
               onSelectCategory={handleSelectCategory}
+              onSelectSource={handleSelectSource}
               onBack={() => handleNavigate("home")}
               onSourceAdded={(source) => {
                 setView({ type: "knowledge-base-list", category: source.category })
