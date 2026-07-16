@@ -114,6 +114,7 @@ function PageContent() {
                 sourceId={view.sourceId}
                 category={view.category}
                 onBack={handleBackToList}
+                onBackToCategories={handleBackToCategories}
                 openEditMode={view.openEditMode ?? false}
               />
             </div>

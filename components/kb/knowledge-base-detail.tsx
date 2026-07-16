@@ -30,10 +30,11 @@ interface KnowledgeBaseDetailProps {
   sourceId: number
   category?: string
   onBack: () => void
+  onBackToCategories?: () => void
   openEditMode?: boolean
 }
 
-export function KnowledgeBaseDetail({ sourceId, category, onBack, openEditMode = false }: KnowledgeBaseDetailProps) {
+export function KnowledgeBaseDetail({ sourceId, category, onBack, onBackToCategories, openEditMode = false }: KnowledgeBaseDetailProps) {
   const source = KB_SOURCES.find((s) => s.id === sourceId)
   const [selectedNode, setSelectedNode] = useState<TreeNode | null>(null)
   const [isEditing, setIsEditing] = useState(openEditMode)
@@ -143,7 +144,7 @@ export function KnowledgeBaseDetail({ sourceId, category, onBack, openEditMode =
       {/* Breadcrumb */}
       <nav className="flex items-center gap-1 text-sm" aria-label="Breadcrumb">
         <button
-          onClick={onBack}
+          onClick={onBackToCategories || onBack}
           className="text-muted-foreground hover:text-foreground transition-colors"
         >
           Knowledge Base
