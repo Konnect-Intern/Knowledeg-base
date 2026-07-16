@@ -25,10 +25,11 @@ import {
 
 interface CategoryListProps {
   onSelectCategory: (category: string) => void
+  onSelectSource: (sourceId: number, category: string) => void // 🌟 Add this new prop
   onBack: () => void
 }
 
-export function CategoryList({ onSelectCategory, onBack }: CategoryListProps) {
+export function CategoryList({ onSelectCategory, onSelectSource, onBack }: CategoryListProps) {
   // Track views and categories
   const [viewState, setViewState] = useState<"list" | "create-source">("list")
   const [addedCategories, setAddedCategories] = useState<string[]>([])
@@ -97,7 +98,7 @@ export function CategoryList({ onSelectCategory, onBack }: CategoryListProps) {
 
     KB_SOURCES.push(newSource)
     setRefreshKey((k) => k + 1)
-    
+
     // 🌟 CHANGED: Go back to list view instead of closing a modal
     setViewState("list")
   }
@@ -139,7 +140,7 @@ export function CategoryList({ onSelectCategory, onBack }: CategoryListProps) {
               <FolderPlus className="size-4 mr-2 text-muted-foreground" />
               New Category
             </DropdownMenuItem>
-            
+
             {/* 🌟 CORRECT TRIGGER: Updates view state */}
             <DropdownMenuItem onClick={() => setViewState("create-source")} className="cursor-pointer">
               <FilePlus className="size-4 mr-2 text-muted-foreground" />
@@ -156,16 +157,17 @@ export function CategoryList({ onSelectCategory, onBack }: CategoryListProps) {
             <p className="text-sm">No knowledge bases available.</p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {categories.map(([category, sources]) => (
-              <CategoryCard
-                key={category}
-                category={category}
-                sources={sources}
-                onClick={() => onSelectCategory(category)}
-              />
-            ))}
-          </div>
+         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+  {categories.map(([category, sources]) => (
+    <CategoryCard
+      key={category}
+      category={category}
+      sources={sources}
+      onViewAll={() => onSelectCategory(category)}
+      onSelectSource={(sourceId) => onSelectSource(sourceId,category)} // 🌟 Routes straight to the detail page
+    />
+  ))}
+</div>
         )}
       </div>
 
