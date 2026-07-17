@@ -48,7 +48,7 @@ function StatusDot({ status }: { status: string }) {
         )}
       />
       <span className="text-sm text-muted-foreground capitalize">
-        {status.charAt(0) + status.slice(1).toLowerCase()}
+        {status === "INDEXED" ? "Active" : status.charAt(0) + status.slice(1).toLowerCase()}
       </span>
     </span>
   )
@@ -295,7 +295,7 @@ export function KnowledgeBaseList({ onSelectSource, onEditSource, onSyncSource, 
                         "bg-[oklch(0.96_0.04_131.684)] text-[oklch(0.3_0.1_131.684)]"
                       )}
                     >
-                      {source.status.charAt(0) + source.status.slice(1).toLowerCase()}
+                      {source.status === "INDEXED" ? "Active" : source.status.charAt(0) + source.status.slice(1).toLowerCase()}
                     </Badge>
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>

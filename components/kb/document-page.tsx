@@ -263,7 +263,7 @@ export function DocumentPage({ sourceId, docId, category, onBack, onBackToCatego
             <PropSection title="Document Info">
               <PropRow label="Status">
                 <Badge variant="outline" className={cn("text-[10px] px-1.5 py-0 h-5", statusCls[doc.status] ?? "")}>
-                  {doc.status.charAt(0) + doc.status.slice(1).toLowerCase()}
+                  {doc.status === "INDEXED" ? "Active" : doc.status.charAt(0) + doc.status.slice(1).toLowerCase()}
                 </Badge>
               </PropRow>
               <PropRow label="File Type">

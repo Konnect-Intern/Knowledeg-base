@@ -141,8 +141,17 @@ export function AddSourcePage({ onBack, onAdd, category }: AddSourcePageProps) {
     if (syncSchedule === "weekly") scheduleConfig = `weekly_on_${syncDay}_at_${syncTime}`;
     if (syncSchedule === "monthly") scheduleConfig = `monthly_on_${syncDate}_at_${syncTime}`;
 
+    let sourceName = "Source";
+    if (activeTab === "WEBSITE") {
+      sourceName = websiteUrl;
+    } else if (activeTab === "HELPDESK") {
+      sourceName = HELPDESK_PLATFORMS.find((p) => p.id === selectedPlatform)?.name || "Helpdesk";
+    } else if (activeTab === "FILES") {
+      sourceName = "Uploaded Files";
+    }
+
     onAdd({
-      name: "Source",
+      name: sourceName,
       url: websiteUrl,
       type: activeTab,
       category: finalCategory,

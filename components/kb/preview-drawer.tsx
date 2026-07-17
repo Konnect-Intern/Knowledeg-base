@@ -49,7 +49,7 @@ export function PreviewDrawer() {
               )}
             >
               <span className="mr-1 size-1.5 rounded-full bg-[oklch(0.648_0.2_131.684)] inline-block" />
-              {doc?.status?.charAt(0) ?? ""}{doc?.status?.slice(1).toLowerCase() ?? ""}
+              {doc?.status === "INDEXED" ? "Active" : (doc?.status?.charAt(0) ?? "") + (doc?.status?.slice(1).toLowerCase() ?? "")}
             </Badge>
           </SheetTitle>
           {doc?.external_id && (

@@ -40,7 +40,7 @@ function SourceIcon({ type, className }: { type: string; className?: string }) {
 
 function StatusBadge({ status }: { status: string }) {
   if (status === "INDEXED")
-    return <Badge variant="outline" className="text-emerald-700 border-emerald-200 bg-emerald-50 text-[10px] px-1.5 py-0 h-5 gap-1"><span className="size-1.5 rounded-full bg-emerald-500" />Indexed</Badge>
+    return <Badge variant="outline" className="text-emerald-700 border-emerald-200 bg-emerald-50 text-[10px] px-1.5 py-0 h-5 gap-1"><span className="size-1.5 rounded-full bg-emerald-500" />Active</Badge>
   if (status === "SYNCING")
     return <Badge variant="outline" className="text-amber-700 border-amber-200 bg-amber-50 text-[10px] px-1.5 py-0 h-5 gap-1"><Loader2 className="size-2.5 animate-spin" />Syncing</Badge>
   return <Badge variant="outline" className="text-red-700 border-red-200 bg-red-50 text-[10px] px-1.5 py-0 h-5 gap-1"><span className="size-1.5 rounded-full bg-red-500" />Failed</Badge>
