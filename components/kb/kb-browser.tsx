@@ -136,7 +136,7 @@ export function KbBrowser({ initialCategory, initialSourceId, onSelectDocument, 
   // ── Create-Source view ────────────────────────────────────────────────────
 
   if (viewState === "create-source") {
-    return <AddSourcePage category={initialCategory} onBack={() => setViewState("browser")} onAdd={handleAddSource} />
+    return <AddSourcePage onBack={() => setViewState("browser")} onAdd={handleAddSource} />
   }
 
   // ── Browser view ──────────────────────────────────────────────────────────
@@ -156,21 +156,9 @@ export function KbBrowser({ initialCategory, initialSourceId, onSelectDocument, 
             <h1 className="text-2xl font-bold text-foreground">Knowledge Base</h1>
             <p className="text-sm text-muted-foreground mt-0.5">Browse categories and sources to view indexed documents.</p>
           </div>
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button className="gap-1.5 bg-[oklch(0.648_0.2_131.684)] hover:bg-[oklch(0.58_0.2_131.684)] text-white shadow-sm">
-                <Plus className="size-4" />New
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-48">
-              <DropdownMenuItem onClick={() => setIsCategoryModalOpen(true)} className="cursor-pointer">
-                <FolderPlus className="size-4 mr-2 text-muted-foreground" />New Category
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => setViewState("create-source")} className="cursor-pointer">
-                <FilePlus className="size-4 mr-2 text-muted-foreground" />New Knowledge
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+          <Button onClick={() => setViewState("create-source")} className="gap-1.5 bg-[oklch(0.648_0.2_131.684)] hover:bg-[oklch(0.58_0.2_131.684)] text-white shadow-sm">
+            <Plus className="size-4" />New
+          </Button>
         </div>
       </div>
 
@@ -201,13 +189,13 @@ export function KbBrowser({ initialCategory, initialSourceId, onSelectDocument, 
         )}
       </div>
 
-      {/* Two-pane layout — flat, page-like */}
-      <div className="flex flex-1 min-h-0 border-t border-border">
+      {/* Two-pane layout */}
+      <div className="flex flex-1 min-h-0 border border-border rounded-xl overflow-hidden bg-background shadow-sm">
 
         {/* LEFT SIDEBAR */}
         <aside className="w-64 shrink-0 border-r border-border flex flex-col bg-muted/20">
-          <div className="px-4 py-3 border-b border-border shrink-0">
-            <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Categories &amp; Sources</p>
+          <div className="px-4 py-3 border-b border-border shrink-0 bg-muted/40">
+            <p className="text-sm font-semibold text-foreground">Categories &amp; Sources</p>
           </div>
           <ScrollArea className="flex-1">
             <div className="py-1">
