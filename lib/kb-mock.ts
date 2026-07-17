@@ -1,5 +1,5 @@
 export type SourceType = "WEBSITE" | "INTEGRATION" | "FILES" | "HELPDESK"
-export type DocStatus = "INDEXED" | "SYNCING" | "FAILED"
+export type DocStatus = "INDEXED" | "SYNCING" | "FAILED" | "DRAFT"
 
 export interface SyncProgress {
   status: "pending" | "in-progress" | "completed" | "failed"
@@ -67,6 +67,23 @@ export const KB_SOURCES: KbSource[] = [
         embed_token_count: 2350,
         created_at: "2026-06-30T14:53:40Z",
         updated_at: "2026-06-30T14:53:45Z",
+      },
+      // 🌟 NEW: Draft Document
+      {
+        id: 12902,
+        source_id: 84,
+        source_filename: "Internal Operations Guide v2",
+        file_type: "pdf",
+        external_id: "internal-ops-v2.pdf",
+        status: "DRAFT",
+        extracted_text: `# Internal Operations Guide v2\n\n**DRAFT VERSION**\n\nThis document outlines the updated internal operating procedures for the support team. Needs review before publishing.`,
+        extracted_text_bytes: 450,
+        content_bytes: 1200,
+        parent_chunk_count: 0,
+        child_chunk_count: 0,
+        embed_token_count: 0,
+        created_at: "2026-07-16T10:00:00Z",
+        updated_at: "2026-07-16T10:05:00Z",
       },
       {
         id: 12946,

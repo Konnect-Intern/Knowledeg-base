@@ -138,3 +138,14 @@ export function formatRelativeTime(dateStr: string): string {
   if (diffMonths === 1) return "1mo ago"
   return `${diffMonths}mo ago`
 }
+
+/** Extracts a readable title from a document */
+export function getDocTitle(externalId: string, sourceFilename: string | null): string {
+  if (sourceFilename) return sourceFilename
+  try {
+    const url = new URL(externalId)
+    const segs = url.pathname.split("/").filter(Boolean)
+    if (!segs.length) return url.hostname
+    return segs[segs.length - 1].split("-").map((w) => w.charAt(0).toUpperCase() + w.slice(1)).join(" ")
+  } catch { return externalId }
+}

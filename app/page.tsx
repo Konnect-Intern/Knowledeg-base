@@ -13,11 +13,15 @@ import { AppSidebar } from "@/components/app-sidebar"
 import { KnowledgeBaseList } from "@/components/kb/knowledge-base-list"
 import { KnowledgeBaseDetail } from "@/components/kb/knowledge-base-detail"
 import { CategoryList } from "@/components/kb/category-list"
+import { KbBrowser } from "@/components/kb/kb-browser"
+import { DocumentPage } from "@/components/kb/document-page"
 
 type View =
   | { type: "knowledge-base-categories" }
+  | { type: "knowledge-base-browser"; category: string; sourceId?: number }
   | { type: "knowledge-base-list"; category?: string }
   | { type: "knowledge-base-detail"; sourceId: number; category?: string; openEditMode?: boolean }
+  | { type: "document-detail"; sourceId: number; docId: number; category: string }
   | { type: "other"; section: string }
 
 function PageContent() {
@@ -26,8 +30,10 @@ function PageContent() {
 
   const activeSection =
     view.type === "knowledge-base-categories" ||
+    view.type === "knowledge-base-browser" ||
     view.type === "knowledge-base-list" ||
-    view.type === "knowledge-base-detail"
+    view.type === "knowledge-base-detail" ||
+    view.type === "document-detail"
       ? "knowledge-base"
       : view.type === "other"
       ? view.section
@@ -43,7 +49,7 @@ function PageContent() {
   }
 
   function handleSelectCategory(category: string) {
-    setView({ type: "knowledge-base-list", category })
+    setView({ type: "knowledge-base-browser", category })
     setOpen(true)
   }
 
@@ -52,10 +58,14 @@ function PageContent() {
     setOpen(true)
   }
 
-  function handleSelectSource(id: number) {
-    const currentCategory = view.type === "knowledge-base-list" ? view.category : undefined
-    setView({ type: "knowledge-base-detail", sourceId: id, category: currentCategory, openEditMode: false })
-    setOpen(false)
+  function handleSelectSource(id: number, passedCategory?: string) {
+    const currentCategory = passedCategory || (view.type === "knowledge-base-list" ? view.category : undefined)
+    if (currentCategory) {
+      setView({ type: "knowledge-base-browser", category: currentCategory, sourceId: id })
+    } else {
+      setView({ type: "knowledge-base-detail", sourceId: id, category: undefined, openEditMode: false })
+    }
+    setOpen(true)
   }
 
   function handleEditSource(id: number) {
@@ -65,9 +75,13 @@ function PageContent() {
   }
 
   function handleBackToList() {
-    // Go back to the KB list with the same category filter if it exists
+    // Go back to the browser (two-pane) if we came from it, otherwise the list
     const currentCategory = view.type === "knowledge-base-detail" ? view.category : undefined
-    setView({ type: "knowledge-base-list", category: currentCategory })
+    if (currentCategory) {
+      setView({ type: "knowledge-base-browser", category: currentCategory })
+    } else {
+      setView({ type: "knowledge-base-list" })
+    }
     setOpen(true)
   }
 
@@ -92,12 +106,43 @@ function PageContent() {
             <CategoryList
               onSelectCategory={handleSelectCategory}
               onSelectSource={handleSelectSource}
+              onSelectDocument={(sourceId, docId, category) => {
+                setView({ type: "document-detail", sourceId, docId, category })
+                setOpen(false)
+              }}
               onBack={() => handleNavigate("home")}
               onSourceAdded={(source) => {
-                setView({ type: "knowledge-base-list", category: source.category })
+                setView({ type: "knowledge-base-browser", category: source.category })
                 setOpen(true)
               }}
             />
+          )}
+          {view.type === "knowledge-base-browser" && (
+            <div className="h-full flex flex-col">
+              <KbBrowser
+                initialCategory={view.category}
+                initialSourceId={view.sourceId}
+                onSelectDocument={(sourceId, docId, category) => {
+                  setView({ type: "document-detail", sourceId, docId, category })
+                  setOpen(false)
+                }}
+                onBack={handleBackToCategories}
+              />
+            </div>
+          )}
+          {view.type === "document-detail" && (
+            <div className="h-full flex flex-col">
+              <DocumentPage
+                sourceId={view.sourceId}
+                docId={view.docId}
+                category={view.category}
+                onBack={() => {
+                  setView({ type: "knowledge-base-browser", category: view.category })
+                  setOpen(true)
+                }}
+                onBackToCategories={handleBackToCategories}
+              />
+            </div>
           )}
           {view.type === "knowledge-base-list" && (
             <KnowledgeBaseList

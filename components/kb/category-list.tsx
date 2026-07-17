@@ -1,9 +1,11 @@
 "use client"
 
 import { useState } from "react"
-import { Plus, FolderPlus, FilePlus } from "lucide-react"
-import { KB_SOURCES, type KbSource } from "@/lib/kb-mock"
+import { Plus, FolderPlus, FilePlus, FileEdit, ExternalLink } from "lucide-react"
+import { KB_SOURCES, type KbSource, type KbDocument } from "@/lib/kb-mock"
+import { getDocTitle, formatRelativeTime } from "@/lib/kb-tree"
 import { CategoryCard } from "./category-card"
+import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { AddSourcePage } from "./add-source-page"
@@ -25,11 +27,12 @@ import {
 
 interface CategoryListProps {
   onSelectCategory: (category: string) => void
-  onSelectSource: (sourceId: number, category: string) => void // 🌟 Add this new prop
+  onSelectSource: (sourceId: number, category: string) => void
+  onSelectDocument: (sourceId: number, docId: number, category: string) => void
   onBack: () => void
 }
 
-export function CategoryList({ onSelectCategory, onSelectSource, onBack }: CategoryListProps) {
+export function CategoryList({ onSelectCategory, onSelectSource, onSelectDocument, onBack }: CategoryListProps) {
   // Track views and categories
   const [viewState, setViewState] = useState<"list" | "create-source">("list")
   const [addedCategories, setAddedCategories] = useState<string[]>([])
@@ -66,6 +69,13 @@ export function CategoryList({ onSelectCategory, onSelectSource, onBack }: Categ
   const categories = Object.entries(categoriesByName).sort(([a], [b]) =>
     a.localeCompare(b)
   )
+
+  // Find all drafted documents globally
+  const draftedDocs = KB_SOURCES.flatMap(source => 
+    source.documents
+      .filter(doc => doc.status === "DRAFT")
+      .map(doc => ({ doc, source }))
+  ).sort((a, b) => new Date(b.doc.updated_at).getTime() - new Date(a.doc.updated_at).getTime())
 
   function handleCreateCategory() {
     const trimmed = newCategoryName.trim()
@@ -149,6 +159,40 @@ export function CategoryList({ onSelectCategory, onSelectSource, onBack }: Categ
           </DropdownMenuContent>
         </DropdownMenu>
       </div>
+
+      {/* ── My Drafts Section ── */}
+      {draftedDocs.length > 0 && (
+        <div className="mb-8">
+          <h2 className="text-sm font-semibold text-foreground mb-3 flex items-center gap-2">
+            My Drafts
+            <Badge variant="secondary" className="rounded-full px-1.5 py-0 h-4 text-[10px]">{draftedDocs.length}</Badge>
+          </h2>
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {draftedDocs.map(({ doc, source }) => (
+              <button
+                key={doc.id}
+                onClick={() => onSelectDocument(source.id, doc.id, source.category)}
+                className="group relative flex flex-col items-start gap-2 rounded-xl border border-border bg-card p-4 text-left transition-all hover:border-purple-300 hover:shadow-sm"
+              >
+                <div className="flex w-full items-start justify-between gap-4">
+                  <div className="flex items-center gap-2 min-w-0">
+                    <div className="flex size-8 shrink-0 items-center justify-center rounded-md bg-purple-50 text-purple-600">
+                      <FileEdit className="size-4" />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <h3 className="font-semibold text-sm truncate">{getDocTitle(doc.external_id, doc.source_filename)}</h3>
+                      <p className="text-xs text-muted-foreground truncate">{source.name}</p>
+                    </div>
+                  </div>
+                </div>
+                <div className="text-xs text-muted-foreground mt-2">
+                  Drafted {formatRelativeTime(doc.updated_at)}
+                </div>
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Categories grid */}
       <div className="flex-1 overflow-auto">
