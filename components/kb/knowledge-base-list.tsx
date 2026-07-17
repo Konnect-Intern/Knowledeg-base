@@ -298,14 +298,8 @@ export function KnowledgeBaseList({ onSelectSource, onEditSource, onSyncSource, 
                       {source.status === "INDEXED" ? "Active" : source.status.charAt(0) + source.status.slice(1).toLowerCase()}
                     </Badge>
                     <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <button
-                          onClick={(e) => e.stopPropagation()}
-                          className="flex items-center justify-center size-6 rounded hover:bg-muted transition-colors text-muted-foreground hover:text-foreground"
-                          aria-label="More options"
-                        >
-                          <MoreVertical className="size-3.5" />
-                        </button>
+                      <DropdownMenuTrigger render={<button onClick={(e) => e.stopPropagation()} className="flex items-center justify-center size-6 rounded hover:bg-muted transition-colors text-muted-foreground hover:text-foreground" aria-label="More options" />}>
+                        <MoreVertical className="size-3.5" />
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end" className="w-36">
 
@@ -389,13 +383,8 @@ export function KnowledgeBaseList({ onSelectSource, onEditSource, onSyncSource, 
                   </TableCell>
                   <TableCell onClick={(e) => e.stopPropagation()}>
                     <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <button
-                          className="flex items-center justify-center size-7 rounded hover:bg-muted transition-colors text-muted-foreground hover:text-foreground"
-                          aria-label="More options"
-                        >
-                          <MoreVertical className="size-3.5" />
-                        </button>
+                      <DropdownMenuTrigger render={<button className="flex items-center justify-center size-7 rounded hover:bg-muted transition-colors text-muted-foreground hover:text-foreground" aria-label="More options" />}>
+                        <MoreVertical className="size-3.5" />
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end" className="w-36">
 

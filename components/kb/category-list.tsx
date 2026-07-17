@@ -139,11 +139,9 @@ export function CategoryList({ onSelectCategory, onSelectSource, onSelectDocumen
 
         {/* Action Dropdown */}
         <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button className="gap-1.5 bg-[oklch(0.648_0.2_131.684)] hover:bg-[oklch(0.58_0.2_131.684)] text-white">
-              <Plus className="size-4" />
-              New
-            </Button>
+          <DropdownMenuTrigger render={<Button className="gap-1.5 bg-[oklch(0.648_0.2_131.684)] hover:bg-[oklch(0.58_0.2_131.684)] text-white" />}>
+            <Plus className="size-4" />
+            New
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-48">
             <DropdownMenuItem onClick={() => setIsCategoryModalOpen(true)} className="cursor-pointer">

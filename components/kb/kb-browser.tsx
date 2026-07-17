@@ -4,7 +4,7 @@ import { useState } from "react"
 import {
   ChevronRight, Globe, Plug, FileText, Headphones,
   Plus, FolderPlus, FilePlus, Loader2, FileSearch, MousePointerClick,
-  Search, X,
+  Search, X, Filter
 } from "lucide-react"
 import { KB_SOURCES, type KbSource, type KbDocument } from "@/lib/kb-mock"
 import { Button } from "@/components/ui/button"
@@ -15,7 +15,20 @@ import { formatRelativeTime } from "@/lib/kb-tree"
 import { AddSourcePage } from "./add-source-page"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+  DropdownMenuSub,
+  DropdownMenuSubTrigger,
+  DropdownMenuSubContent,
+  DropdownMenuRadioGroup,
+  DropdownMenuRadioItem,
+  DropdownMenuSeparator,
+  DropdownMenuLabel,
+  DropdownMenuGroup,
+} from "@/components/ui/dropdown-menu"
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -70,6 +83,12 @@ export function KbBrowser({ initialCategory, initialSourceId, onSelectDocument, 
   const [addedCategories, setAddedCategories] = useState<string[]>([])
   const [refreshKey, setRefreshKey] = useState(0)
 
+  // Filter States
+  const [filterStatus, setFilterStatus] = useState<string>("All")
+  const [filterType, setFilterType] = useState<string>("All")
+  const [filterCreatedAt, setFilterCreatedAt] = useState<string>("All Time")
+  const [filterUpdatedAt, setFilterUpdatedAt] = useState<string>("All Time")
+
   // ── Data ──────────────────────────────────────────────────────────────────
 
   const categoriesByName = KB_SOURCES.reduce((acc, s) => {
@@ -82,19 +101,63 @@ export function KbBrowser({ initialCategory, initialSourceId, onSelectDocument, 
 
   const categories = Object.entries(categoriesByName)
     .map(([category, sources]) => {
-      const filtered = searchQuery.trim()
-        ? sources.filter((s) => {
-            const q = searchQuery.toLowerCase()
-            return s.name.toLowerCase().includes(q) || s.url.toLowerCase().includes(q)
-          })
-        : sources
+      const filtered = sources.filter((s) => {
+        // Search Filter
+        if (searchQuery.trim()) {
+          const q = searchQuery.toLowerCase()
+          if (!s.name.toLowerCase().includes(q) && !s.url.toLowerCase().includes(q)) {
+            return false
+          }
+        }
+
+        // Status Filter
+        if (filterStatus !== "All") {
+          const sStatus = s.status === "INDEXED" ? "Active" : s.status === "SYNCING" ? "Syncing" : "Failed"
+          if (sStatus !== filterStatus) return false
+        }
+
+        // Type Filter
+        if (filterType !== "All") {
+          const mapType: Record<string, string> = {
+            "Integration": "INTEGRATION",
+            "Website": "WEBSITE",
+            "Files": "FILES",
+            "Helpdesk": "HELPDESK"
+          }
+          if (s.type !== mapType[filterType]) return false
+        }
+
+        // Created At Filter
+        if (filterCreatedAt !== "All Time") {
+          const date = new Date(s.created_at)
+          const now = new Date()
+          const days = (now.getTime() - date.getTime()) / (1000 * 60 * 60 * 24)
+          if (filterCreatedAt === "Today" && days > 1) return false
+          if (filterCreatedAt === "Last 7 Days" && days > 7) return false
+          if (filterCreatedAt === "Last 30 Days" && days > 30) return false
+        }
+
+        // Updated At Filter
+        if (filterUpdatedAt !== "All Time") {
+          const date = new Date(s.updated_at)
+          const now = new Date()
+          const days = (now.getTime() - date.getTime()) / (1000 * 60 * 60 * 24)
+          if (filterUpdatedAt === "Today" && days > 1) return false
+          if (filterUpdatedAt === "Last 7 Days" && days > 7) return false
+          if (filterUpdatedAt === "Last 30 Days" && days > 30) return false
+        }
+
+        return true
+      })
       return [category, filtered] as [string, KbSource[]]
     })
-    .filter(([, sources]) => !searchQuery.trim() || (sources as KbSource[]).length > 0)
+    .filter(([, sources]) => (sources as KbSource[]).length > 0)
     .sort(([a], [b]) => a.localeCompare(b))
 
-  // When searching, auto-expand all categories that have matches
-  const effectiveExpanded = searchQuery.trim()
+  const hasActiveFilters = searchQuery.trim() !== "" || filterStatus !== "All" || filterType !== "All" || filterCreatedAt !== "All Time" || filterUpdatedAt !== "All Time"
+
+  // When searching or filtering, auto-expand all categories that have matches
+  const effectiveExpanded = hasActiveFilters
     ? new Set([...expandedCategories, ...categories.map(([c]) => c)])
     : expandedCategories
 
@@ -162,8 +225,8 @@ export function KbBrowser({ initialCategory, initialSourceId, onSelectDocument, 
         </div>
       </div>
 
-      {/* Search bar */}
-      <div className="flex items-center gap-3 mb-3 shrink-0">
+      {/* Search and Filters */}
+      <div className="flex flex-wrap items-center gap-3 mb-3 shrink-0">
         <div className="relative w-72">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-3.5 text-muted-foreground pointer-events-none" />
           <Input
@@ -182,8 +245,93 @@ export function KbBrowser({ initialCategory, initialSourceId, onSelectDocument, 
             </button>
           )}
         </div>
-        {searchQuery.trim() && (
-          <span className="text-xs text-muted-foreground">
+
+        <DropdownMenu>
+          <DropdownMenuTrigger render={<Button variant="outline" className="h-9 gap-1.5 text-sm" />}>
+            <Filter className="size-3.5" />
+            Filter
+            {(filterStatus !== "All" || filterType !== "All" || filterCreatedAt !== "All Time" || filterUpdatedAt !== "All Time") && (
+              <Badge variant="secondary" className="ml-1 px-1.5 py-0 text-[10px] rounded-sm">
+                {[filterStatus !== "All", filterType !== "All", filterCreatedAt !== "All Time", filterUpdatedAt !== "All Time"].filter(Boolean).length}
+              </Badge>
+            )}
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="start" className="w-48">
+            <DropdownMenuGroup>
+              <DropdownMenuLabel>Filter Sources</DropdownMenuLabel>
+            </DropdownMenuGroup>
+            <DropdownMenuSeparator />
+            
+            <DropdownMenuSub>
+              <DropdownMenuSubTrigger>Status</DropdownMenuSubTrigger>
+              <DropdownMenuSubContent>
+                <DropdownMenuRadioGroup value={filterStatus} onValueChange={setFilterStatus}>
+                  <DropdownMenuRadioItem value="All">All</DropdownMenuRadioItem>
+                  <DropdownMenuRadioItem value="Active">Active</DropdownMenuRadioItem>
+                  <DropdownMenuRadioItem value="Syncing">Syncing</DropdownMenuRadioItem>
+                  <DropdownMenuRadioItem value="Failed">Failed</DropdownMenuRadioItem>
+                </DropdownMenuRadioGroup>
+              </DropdownMenuSubContent>
+            </DropdownMenuSub>
+
+            <DropdownMenuSub>
+              <DropdownMenuSubTrigger>Type</DropdownMenuSubTrigger>
+              <DropdownMenuSubContent>
+                <DropdownMenuRadioGroup value={filterType} onValueChange={setFilterType}>
+                  <DropdownMenuRadioItem value="All">All</DropdownMenuRadioItem>
+                  <DropdownMenuRadioItem value="Integration">Integration</DropdownMenuRadioItem>
+                  <DropdownMenuRadioItem value="Website">Website</DropdownMenuRadioItem>
+                  <DropdownMenuRadioItem value="Files">Files</DropdownMenuRadioItem>
+                  <DropdownMenuRadioItem value="Helpdesk">Helpdesk</DropdownMenuRadioItem>
+                </DropdownMenuRadioGroup>
+              </DropdownMenuSubContent>
+            </DropdownMenuSub>
+
+            <DropdownMenuSub>
+              <DropdownMenuSubTrigger>Created At</DropdownMenuSubTrigger>
+              <DropdownMenuSubContent>
+                <DropdownMenuRadioGroup value={filterCreatedAt} onValueChange={setFilterCreatedAt}>
+                  <DropdownMenuRadioItem value="All Time">All Time</DropdownMenuRadioItem>
+                  <DropdownMenuRadioItem value="Today">Today</DropdownMenuRadioItem>
+                  <DropdownMenuRadioItem value="Last 7 Days">Last 7 Days</DropdownMenuRadioItem>
+                  <DropdownMenuRadioItem value="Last 30 Days">Last 30 Days</DropdownMenuRadioItem>
+                </DropdownMenuRadioGroup>
+              </DropdownMenuSubContent>
+            </DropdownMenuSub>
+
+            <DropdownMenuSub>
+              <DropdownMenuSubTrigger>Updated At</DropdownMenuSubTrigger>
+              <DropdownMenuSubContent>
+                <DropdownMenuRadioGroup value={filterUpdatedAt} onValueChange={setFilterUpdatedAt}>
+                  <DropdownMenuRadioItem value="All Time">All Time</DropdownMenuRadioItem>
+                  <DropdownMenuRadioItem value="Today">Today</DropdownMenuRadioItem>
+                  <DropdownMenuRadioItem value="Last 7 Days">Last 7 Days</DropdownMenuRadioItem>
+                  <DropdownMenuRadioItem value="Last 30 Days">Last 30 Days</DropdownMenuRadioItem>
+                </DropdownMenuRadioGroup>
+              </DropdownMenuSubContent>
+            </DropdownMenuSub>
+
+            {(filterStatus !== "All" || filterType !== "All" || filterCreatedAt !== "All Time" || filterUpdatedAt !== "All Time") && (
+              <>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem 
+                  className="justify-center text-xs text-muted-foreground"
+                  onClick={() => {
+                    setFilterStatus("All");
+                    setFilterType("All");
+                    setFilterCreatedAt("All Time");
+                    setFilterUpdatedAt("All Time");
+                  }}
+                >
+                  Clear Filters
+                </DropdownMenuItem>
+              </>
+            )}
+          </DropdownMenuContent>
+        </DropdownMenu>
+
+        {hasActiveFilters && (
+          <span className="text-xs text-muted-foreground ml-2">
             {totalResults} source{totalResults !== 1 ? "s" : ""} found
           </span>
         )}
@@ -199,11 +347,17 @@ export function KbBrowser({ initialCategory, initialSourceId, onSelectDocument, 
           </div>
           <ScrollArea className="flex-1">
             <div className="py-1">
-              {categories.length === 0 && searchQuery.trim() ? (
+              {categories.length === 0 && hasActiveFilters ? (
                 <div className="flex flex-col items-center justify-center gap-2 py-10 px-4 text-center">
                   <FileSearch className="size-5 text-muted-foreground opacity-40" />
-                  <p className="text-xs text-muted-foreground">No sources match your search.</p>
-                  <button onClick={() => setSearchQuery("")} className="text-xs text-[oklch(0.648_0.2_131.684)] hover:underline">Clear search</button>
+                  <p className="text-xs text-muted-foreground">No sources match your filters.</p>
+                  <button onClick={() => {
+                    setSearchQuery("")
+                    setFilterStatus("All")
+                    setFilterType("All")
+                    setFilterCreatedAt("All Time")
+                    setFilterUpdatedAt("All Time")
+                  }} className="text-xs text-[oklch(0.648_0.2_131.684)] hover:underline">Clear filters</button>
                 </div>
               ) : (
                 categories.map(([category, sources]) => {
