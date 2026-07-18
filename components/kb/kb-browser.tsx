@@ -207,60 +207,58 @@ export function KbBrowser({ initialCategory, initialSourceId, onSelectDocument, 
   return (
     <div className="flex flex-col h-full" key={refreshKey}>
 
-      {/* Header */}
-      <div className="mb-5 shrink-0">
-        <nav className="flex items-center gap-1 text-sm mb-1" aria-label="Breadcrumb">
-          <button onClick={onBack} className="text-muted-foreground hover:text-foreground transition-colors">Knowledge Base</button>
-          <ChevronRight className="size-3.5 text-muted-foreground" />
-          <span className="text-foreground font-medium">{initialCategory}</span>
-        </nav>
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-2xl font-bold text-foreground">Knowledge Base</h1>
-            <p className="text-sm text-muted-foreground mt-0.5">Browse categories and sources to view indexed documents.</p>
-          </div>
-          <Button onClick={() => setViewState("create-source")} className="gap-1.5 bg-[oklch(0.648_0.2_131.684)] hover:bg-[oklch(0.58_0.2_131.684)] text-white shadow-sm">
-            <Plus className="size-4" />New
-          </Button>
-        </div>
-      </div>
-
-      {/* Search and Filters */}
-      <div className="flex flex-wrap items-center gap-3 mb-3 shrink-0">
-        <div className="relative w-72">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-3.5 text-muted-foreground pointer-events-none" />
-          <Input
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Search sources by name or URL…"
-            className="pl-9 pr-8 h-9 text-sm"
-          />
-          {searchQuery && (
-            <button
-              onClick={() => setSearchQuery("")}
-              className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
-              aria-label="Clear search"
-            >
-              <X className="size-3.5" />
-            </button>
+      {/* Header & Controls */}
+      <div className="mb-5 shrink-0 flex flex-wrap items-center justify-between gap-4">
+        {/* Left Side: Breadcrumb and Search Results count */}
+        <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4">
+          <nav className="flex items-center gap-1 text-sm" aria-label="Breadcrumb">
+            <button onClick={onBack} className="text-muted-foreground hover:text-foreground transition-colors">Knowledge Base</button>
+            <ChevronRight className="size-3.5 text-muted-foreground" />
+            <span className="text-foreground font-medium">{initialCategory}</span>
+          </nav>
+          {hasActiveFilters && (
+            <span className="text-xs text-muted-foreground">
+              {totalResults} source{totalResults !== 1 ? "s" : ""} found
+            </span>
           )}
         </div>
 
-        <DropdownMenu>
-          <DropdownMenuTrigger render={<Button variant="outline" className="h-9 gap-1.5 text-sm" />}>
-            <Filter className="size-3.5" />
-            Filter
-            {(filterStatus !== "All" || filterType !== "All" || filterCreatedAt !== "All Time" || filterUpdatedAt !== "All Time") && (
-              <Badge variant="secondary" className="ml-1 px-1.5 py-0 text-[10px] rounded-sm">
-                {[filterStatus !== "All", filterType !== "All", filterCreatedAt !== "All Time", filterUpdatedAt !== "All Time"].filter(Boolean).length}
-              </Badge>
+        {/* Right Side: Search, Filter, New Button */}
+        <div className="flex flex-wrap items-center gap-2 sm:gap-3 ml-auto">
+          <div className="relative w-full sm:w-64">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-3.5 text-muted-foreground pointer-events-none" />
+            <Input
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Search sources by name"
+              className="pl-9 pr-8 h-9 text-sm w-full"
+            />
+            {searchQuery && (
+              <button
+                onClick={() => setSearchQuery("")}
+                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                aria-label="Clear search"
+              >
+                <X className="size-3.5" />
+              </button>
             )}
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="start" className="w-48">
-            <DropdownMenuGroup>
-              <DropdownMenuLabel>Filter Sources</DropdownMenuLabel>
-            </DropdownMenuGroup>
-            <DropdownMenuSeparator />
+          </div>
+
+          <DropdownMenu>
+            <DropdownMenuTrigger render={<Button variant="outline" className="h-9 gap-1.5 text-sm" />}>
+              <Filter className="size-3.5" />
+              Filter
+              {(filterStatus !== "All" || filterType !== "All" || filterCreatedAt !== "All Time" || filterUpdatedAt !== "All Time") && (
+                <Badge variant="secondary" className="ml-1 px-1.5 py-0 text-[10px] rounded-sm">
+                  {[filterStatus !== "All", filterType !== "All", filterCreatedAt !== "All Time", filterUpdatedAt !== "All Time"].filter(Boolean).length}
+                </Badge>
+              )}
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-48">
+              <DropdownMenuGroup>
+                <DropdownMenuLabel>Filter Sources</DropdownMenuLabel>
+              </DropdownMenuGroup>
+              <DropdownMenuSeparator />
             
             <DropdownMenuSub>
               <DropdownMenuSubTrigger>Status</DropdownMenuSubTrigger>
@@ -330,11 +328,10 @@ export function KbBrowser({ initialCategory, initialSourceId, onSelectDocument, 
           </DropdownMenuContent>
         </DropdownMenu>
 
-        {hasActiveFilters && (
-          <span className="text-xs text-muted-foreground ml-2">
-            {totalResults} source{totalResults !== 1 ? "s" : ""} found
-          </span>
-        )}
+        <Button onClick={() => setViewState("create-source")} className="gap-1.5 bg-[oklch(0.648_0.2_131.684)] hover:bg-[oklch(0.58_0.2_131.684)] text-white shadow-sm h-9">
+          <Plus className="size-4" />New
+        </Button>
+        </div>
       </div>
 
       {/* Two-pane layout */}

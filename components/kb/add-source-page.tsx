@@ -162,7 +162,7 @@ export function AddSourcePage({ onBack, onAdd, category }: AddSourcePageProps) {
   const submitLabel = activeTab === "WEBSITE" ? "Add website" : activeTab === "FILES" ? "Add files" : "Add helpdesk"
 
   return (
-    <div className="h-full w-full max-w-6xl mx-auto py-6 px-8 flex flex-col">
+    <div className="h-full w-full pb-6 flex flex-col">
       {/* Back button */}
       <button
         onClick={onBack}

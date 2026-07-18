@@ -125,16 +125,10 @@ export function CategoryList({ onSelectCategory, onSelectSource, onSelectDocumen
 
   return (
     <div className="h-full flex flex-col" key={refreshKey}>
-      {/* Breadcrumb */}
-      <nav className="flex items-center gap-1.5 text-sm mb-1" aria-label="Breadcrumb">
-        <span className="text-foreground font-medium">Knowledge Base</span>
-      </nav>
-
       {/* Header with Actions */}
       <div className="flex items-start justify-between mb-6">
         <div>
           <h1 className="text-2xl font-bold text-foreground mb-1">Knowledge Base</h1>
-          <p className="text-sm text-muted-foreground">Choose a category to browse its knowledge bases.</p>
         </div>
 
         {/* Action Dropdown */}
