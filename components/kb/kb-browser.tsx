@@ -11,8 +11,9 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { cn } from "@/lib/utils"
-import { formatRelativeTime } from "@/lib/kb-tree"
+import { formatRelativeTime, buildUrlTree } from "@/lib/kb-tree"
 import { AddSourcePage } from "./add-source-page"
+import { UrlTree } from "./url-tree"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
@@ -100,6 +101,10 @@ export function KbBrowser({ initialCategory, initialSourceId, onSelectDocument, 
 
   const selectedSource = selectedSourceId ? KB_SOURCES.find((s) => s.id === selectedSourceId) ?? null : null
   const totalResults = categories.reduce((sum, [, srcs]) => sum + (srcs as KbSource[]).length, 0)
+  const [selectedDocId, setSelectedDocId] = useState<number | null>(null)
+  
+  // Build URL tree from selected source documents
+  const urlTree = selectedSource ? buildUrlTree(selectedSource.documents) : null
 
   // ── Handlers ─────────────────────────────────────────────────────────────
 
@@ -273,7 +278,7 @@ export function KbBrowser({ initialCategory, initialSourceId, onSelectDocument, 
                 </span>
               </div>
 
-              {/* Document list */}
+              {/* Document list with URL tree */}
               <ScrollArea className="flex-1">
                 {selectedSource.documents.length === 0 ? (
                   <div className="flex flex-col items-center justify-center h-64 gap-3 text-muted-foreground px-8 text-center">
@@ -289,30 +294,20 @@ export function KbBrowser({ initialCategory, initialSourceId, onSelectDocument, 
                       </p>
                     </div>
                   </div>
-                ) : (
-                  <div className="divide-y divide-border">
-                    {selectedSource.documents.map((doc) => (
-                      <button
-                        key={doc.id}
-                        onClick={() => onSelectDocument(selectedSource.id, doc.id, selectedSource.category)}
-                        className="w-full flex items-center gap-4 px-6 py-4 text-left hover:bg-muted/30 transition-colors group"
-                      >
-                        <div className="flex size-8 shrink-0 items-center justify-center rounded-md border border-border bg-muted/50">
-                          <FileText className="size-3.5 text-muted-foreground" />
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <p className="text-sm font-medium text-foreground truncate">{getDocTitle(doc)}</p>
-                          <p className="text-xs text-muted-foreground mt-0.5">
-                            Synced {formatRelativeTime(doc.updated_at)}
-                            {doc.parent_chunk_count > 0 && <> &middot; {doc.parent_chunk_count} chunks</>}
-                          </p>
-                        </div>
-                        <StatusBadge status={doc.status} />
-                        <ChevronRight className="size-4 text-muted-foreground shrink-0 opacity-0 group-hover:opacity-60 transition-opacity" />
-                      </button>
-                    ))}
+                ) : urlTree ? (
+                  <div className="px-4 py-3">
+                    <UrlTree
+                      node={urlTree}
+                      selectedDocId={selectedDocId}
+                      onSelectNode={(node) => {
+                        if (node.document) {
+                          setSelectedDocId(node.document.id)
+                          onSelectDocument(selectedSource.id, node.document.id, selectedSource.category)
+                        }
+                      }}
+                    />
                   </div>
-                )}
+                ) : null}
               </ScrollArea>
             </>
           ) : (
