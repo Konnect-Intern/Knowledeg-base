@@ -14,6 +14,8 @@ interface UrlTreeProps {
   depth?: number
   /** root is always shown expanded; children start expanded up to depth 1 */
   defaultExpanded?: boolean
+  /** compact mode for sidebar display - reduces padding and font size */
+  compact?: boolean
 }
 
 export function UrlTree({
@@ -22,6 +24,7 @@ export function UrlTree({
   onSelectNode,
   depth = 0,
   defaultExpanded = true,
+  compact = false,
 }: UrlTreeProps) {
   const [expanded, setExpanded] = useState(defaultExpanded)
   const folder = isFolder(node)
@@ -32,37 +35,41 @@ export function UrlTree({
   if (isRoot) {
     return (
       <div className="select-none">
-        {/* Root label row */}
-        <button
-          className={cn(
-            "group flex w-full items-center gap-1.5 rounded px-2 py-1.5 text-left text-sm font-medium transition-colors hover:bg-muted/60",
-            isSelected && "bg-[oklch(0.96_0.04_131.684)] text-[oklch(0.3_0.1_131.684)]"
-          )}
-          onClick={() => {
-            if (folder) setExpanded((v) => !v)
-            if (node.document) onSelectNode(node)
-          }}
-        >
-          <span className="flex size-4 shrink-0 items-center justify-center text-muted-foreground">
-            {folder ? (
-              expanded ? <ChevronDown className="size-3.5" /> : <ChevronRight className="size-3.5" />
-            ) : null}
-          </span>
-          {folder ? (
-            expanded ? (
-              <FolderOpen className="size-4 shrink-0 text-muted-foreground" />
-            ) : (
-              <Folder className="size-4 shrink-0 text-muted-foreground" />
-            )
-          ) : (
-            <FileText className="size-4 shrink-0 text-muted-foreground" />
-          )}
-          <span className="truncate flex-1" title={node.label}>
-            {node.label}
-          </span>
-          {/* green dot */}
-          <span className="ml-auto size-2 shrink-0 rounded-full bg-[oklch(0.648_0.2_131.684)]" />
-        </button>
+        {!compact && (
+          <>
+            {/* Root label row (only show in full mode) */}
+            <button
+              className={cn(
+                "group flex w-full items-center gap-1.5 rounded px-2 py-1.5 text-left text-sm font-medium transition-colors hover:bg-muted/60",
+                isSelected && "bg-[oklch(0.96_0.04_131.684)] text-[oklch(0.3_0.1_131.684)]"
+              )}
+              onClick={() => {
+                if (folder) setExpanded((v) => !v)
+                if (node.document) onSelectNode(node)
+              }}
+            >
+              <span className="flex size-4 shrink-0 items-center justify-center text-muted-foreground">
+                {folder ? (
+                  expanded ? <ChevronDown className="size-3.5" /> : <ChevronRight className="size-3.5" />
+                ) : null}
+              </span>
+              {folder ? (
+                expanded ? (
+                  <FolderOpen className="size-4 shrink-0 text-muted-foreground" />
+                ) : (
+                  <Folder className="size-4 shrink-0 text-muted-foreground" />
+                )
+              ) : (
+                <FileText className="size-4 shrink-0 text-muted-foreground" />
+              )}
+              <span className="truncate flex-1" title={node.label}>
+                {node.label}
+              </span>
+              {/* green dot */}
+              <span className="ml-auto size-2 shrink-0 rounded-full bg-[oklch(0.648_0.2_131.684)]" />
+            </button>
+          </>
+        )}
 
         {/* Children */}
         {folder && expanded && (
@@ -75,6 +82,7 @@ export function UrlTree({
                 onSelectNode={onSelectNode}
                 depth={depth + 1}
                 defaultExpanded={depth < 1}
+                compact={compact}
               />
             ))}
           </div>
@@ -87,13 +95,15 @@ export function UrlTree({
   // Each depth level adds 16px of left padding via inline style to avoid Tailwind purge issues
   // with dynamic values. We cap the visual indent at 6 levels to prevent overflow; deeper
   // routes continue to work but indent stops growing to preserve the panel width.
-  const indentPx = Math.min(depth, 6) * 16
+  const indentPx = Math.min(depth, 6) * (compact ? 12 : 16)
 
   return (
     <div>
       <button
         className={cn(
-          "group flex w-full items-center gap-1.5 rounded px-2 py-1.5 text-left text-sm transition-colors hover:bg-muted/60",
+          compact
+            ? "group flex w-full items-center gap-1 rounded px-1 py-1 text-left text-xs transition-colors hover:bg-muted/60"
+            : "group flex w-full items-center gap-1.5 rounded px-2 py-1.5 text-left text-sm transition-colors hover:bg-muted/60",
           isSelected && "bg-[oklch(0.96_0.04_131.684)] text-[oklch(0.3_0.1_131.684)]"
         )}
         style={{ paddingLeft: `${indentPx + 8}px` }}
@@ -103,12 +113,12 @@ export function UrlTree({
         }}
       >
         {/* Chevron for folders, spacer for leaves */}
-        <span className="flex size-4 shrink-0 items-center justify-center text-muted-foreground">
+        <span className="flex size-3 shrink-0 items-center justify-center text-muted-foreground">
           {folder ? (
             expanded ? (
-              <ChevronDown className="size-3.5" />
+              <ChevronDown className={cn(compact ? "size-3" : "size-3.5")} />
             ) : (
-              <ChevronRight className="size-3.5" />
+              <ChevronRight className={cn(compact ? "size-3" : "size-3.5")} />
             )
           ) : null}
         </span>
@@ -116,12 +126,12 @@ export function UrlTree({
         {/* Icon: folder or file — same color */}
         {folder ? (
           expanded ? (
-            <FolderOpen className="size-4 shrink-0 text-muted-foreground" />
+            <FolderOpen className={cn("shrink-0 text-muted-foreground", compact ? "size-3" : "size-4")} />
           ) : (
-            <Folder className="size-4 shrink-0 text-muted-foreground" />
+            <Folder className={cn("shrink-0 text-muted-foreground", compact ? "size-3" : "size-4")} />
           )
         ) : (
-          <FileText className="size-4 shrink-0 text-muted-foreground" />
+          <FileText className={cn("shrink-0 text-muted-foreground", compact ? "size-3" : "size-4")} />
         )}
 
         {/* Label — truncated so it never overflows the panel */}
@@ -133,7 +143,7 @@ export function UrlTree({
         </span>
 
         {/* Green status dot — always shown */}
-        <span className="ml-2 size-2 shrink-0 rounded-full bg-[oklch(0.648_0.2_131.684)]" />
+        <span className={cn("shrink-0 rounded-full bg-[oklch(0.648_0.2_131.684)]", compact ? "size-1.5 ml-1" : "ml-2 size-2")} />
       </button>
 
       {/* Render children when expanded */}
@@ -147,6 +157,7 @@ export function UrlTree({
               onSelectNode={onSelectNode}
               depth={depth + 1}
               defaultExpanded={depth < 1}
+              compact={compact}
             />
           ))}
         </div>

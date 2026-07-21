@@ -102,6 +102,7 @@ export function KbBrowser({ initialCategory, initialSourceId, onSelectDocument, 
   const selectedSource = selectedSourceId ? KB_SOURCES.find((s) => s.id === selectedSourceId) ?? null : null
   const totalResults = categories.reduce((sum, [, srcs]) => sum + (srcs as KbSource[]).length, 0)
   const [selectedDocId, setSelectedDocId] = useState<number | null>(null)
+  const [expandedSources, setExpandedSources] = useState<Set<number>>(new Set([defaultSourceId ?? -1]))
   
   // Build URL tree from selected source documents
   const urlTree = selectedSource ? buildUrlTree(selectedSource.documents) : null
@@ -112,6 +113,14 @@ export function KbBrowser({ initialCategory, initialSourceId, onSelectDocument, 
     setExpandedCategories((prev) => {
       const next = new Set(prev)
       next.has(cat) ? next.delete(cat) : next.add(cat)
+      return next
+    })
+  }
+
+  function toggleSource(sourceId: number) {
+    setExpandedSources((prev) => {
+      const next = new Set(prev)
+      next.has(sourceId) ? next.delete(sourceId) : next.add(sourceId)
       return next
     })
   }
@@ -235,21 +244,54 @@ export function KbBrowser({ initialCategory, initialSourceId, onSelectDocument, 
                         ) : (
                           sources.map((source) => {
                             const isSel = selectedSourceId === source.id
+                            const isExpanded = expandedSources.has(source.id)
+                            const sourceTree = buildUrlTree(source.documents)
                             return (
-                              <button
-                                key={source.id}
-                                onClick={() => setSelectedSourceId(source.id)}
-                                className={cn(
-                                  "w-full flex items-center gap-2 px-3 py-1.5 text-left text-[13px] transition-colors",
-                                  isSel
-                                    ? "bg-[oklch(0.648_0.2_131.684)]/10 text-[oklch(0.35_0.15_131.684)] font-medium"
-                                    : "text-muted-foreground hover:text-foreground hover:bg-muted/40"
-                                )}
-                              >
-                                <SourceIcon type={source.type} className={cn("shrink-0", isSel ? "text-[oklch(0.648_0.2_131.684)]" : "text-muted-foreground")} />
-                                <span className="flex-1 truncate">{source.name}</span>
-                                <span className="text-[11px] text-muted-foreground shrink-0 tabular-nums">{source.documents.length}</span>
-                              </button>
+                              <div key={source.id}>
+                                <button
+                                  onClick={() => {
+                                    if (source.documents.length > 0) {
+                                      toggleSource(source.id)
+                                    }
+                                    setSelectedSourceId(source.id)
+                                  }}
+                                  className={cn(
+                                    "w-full flex items-center gap-2 px-3 py-1.5 text-left text-[13px] transition-colors",
+                                    isSel
+                                      ? "bg-[oklch(0.648_0.2_131.684)]/10 text-[oklch(0.35_0.15_131.684)] font-medium"
+                                      : "text-muted-foreground hover:text-foreground hover:bg-muted/40"
+                                  )}
+                                >
+                                  {source.documents.length > 0 ? (
+                                    <ChevronRight className={cn("size-3.5 shrink-0 transition-transform duration-200", isExpanded && "rotate-90")} />
+                                  ) : (
+                                    <span className="size-3.5 shrink-0" />
+                                  )}
+                                  <SourceIcon type={source.type} className={cn("shrink-0", isSel ? "text-[oklch(0.648_0.2_131.684)]" : "text-muted-foreground")} />
+                                  <span className="flex-1 truncate">{source.name}</span>
+                                  <span className="text-[11px] text-muted-foreground shrink-0 tabular-nums">{source.documents.length}</span>
+                                </button>
+
+                                {/* Documents tree for this source */}
+                                <div className={cn("overflow-hidden transition-all duration-200 ease-in-out ml-5 border-l border-border/50", isExpanded && source.documents.length > 0 ? "max-h-[600px] opacity-100" : "max-h-0 opacity-0")}>
+                                  {sourceTree && (
+                                    <div className="py-1">
+                                      <UrlTree
+                                        node={sourceTree}
+                                        selectedDocId={selectedDocId}
+                                        onSelectNode={(node) => {
+                                          if (node.document) {
+                                            setSelectedDocId(node.document.id)
+                                            setSelectedSourceId(source.id)
+                                            onSelectDocument(source.id, node.document.id, source.category)
+                                          }
+                                        }}
+                                        compact={true}
+                                      />
+                                    </div>
+                                  )}
+                                </div>
+                              </div>
                             )
                           })
                         )}
@@ -264,60 +306,83 @@ export function KbBrowser({ initialCategory, initialSourceId, onSelectDocument, 
         </aside>
 
 
-        {/* RIGHT CONTENT AREA */}
+        {/* RIGHT CONTENT AREA - Document Detail */}
         <div className="flex-1 min-w-0 flex flex-col bg-background">
-          {selectedSource ? (
-            <>
-              {/* Subtle source label — no box, no button */}
-              <div className="px-6 py-3 border-b border-border shrink-0 flex items-center gap-2">
-                <SourceIcon type={selectedSource.type} className="text-muted-foreground" />
-                <span className="text-sm font-semibold text-foreground">{selectedSource.name}</span>
-                <StatusBadge status={selectedSource.status} />
-                <span className="text-xs text-muted-foreground ml-auto">
-                  {selectedSource.documents.length} document{selectedSource.documents.length !== 1 ? "s" : ""}
-                </span>
-              </div>
+          {selectedDocId && selectedSource ? (
+            (() => {
+              const doc = selectedSource.documents.find((d) => d.id === selectedDocId)
+              if (!doc) {
+                return (
+                  <div className="flex flex-col items-center justify-center flex-1 gap-3 text-muted-foreground">
+                    <FileSearch className="size-6 opacity-40" />
+                    <p className="text-sm font-medium text-foreground">Document not found</p>
+                  </div>
+                )
+              }
+              return (
+                <>
+                  {/* Document header */}
+                  <div className="px-6 py-4 border-b border-border shrink-0">
+                    <div className="flex items-start justify-between gap-4">
+                      <div className="flex-1">
+                        <h2 className="text-lg font-semibold text-foreground truncate">{getDocTitle(doc)}</h2>
+                        <p className="text-xs text-muted-foreground mt-1">{doc.external_id}</p>
+                      </div>
+                      <StatusBadge status={doc.status} />
+                    </div>
+                  </div>
 
-              {/* Document list with URL tree */}
-              <ScrollArea className="flex-1">
-                {selectedSource.documents.length === 0 ? (
-                  <div className="flex flex-col items-center justify-center h-64 gap-3 text-muted-foreground px-8 text-center">
-                    <div className="flex size-12 items-center justify-center rounded-xl bg-muted">
-                      <FileSearch className="size-5 opacity-40" />
+                  {/* Document content preview */}
+                  <ScrollArea className="flex-1">
+                    <div className="p-6 space-y-4">
+                      <div>
+                        <p className="text-xs text-muted-foreground uppercase tracking-wider font-semibold mb-2">Content Preview</p>
+                        <div className="bg-muted/50 rounded-lg p-4 text-sm text-foreground max-h-96 overflow-auto">
+                          <p>{doc.content || "No content preview available."}</p>
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-4">
+                        <div>
+                          <p className="text-xs text-muted-foreground uppercase tracking-wider font-semibold mb-1">Chunks</p>
+                          <p className="text-lg font-semibold text-foreground">{doc.parent_chunk_count}</p>
+                        </div>
+                        <div>
+                          <p className="text-xs text-muted-foreground uppercase tracking-wider font-semibold mb-1">Last Synced</p>
+                          <p className="text-sm text-foreground">{formatRelativeTime(doc.updated_at)}</p>
+                        </div>
+                      </div>
+
+                      <div>
+                        <p className="text-xs text-muted-foreground uppercase tracking-wider font-semibold mb-2">Metadata</p>
+                        <div className="space-y-2 text-sm">
+                          <div className="flex items-center justify-between py-1.5 px-3 bg-muted/50 rounded">
+                            <span className="text-muted-foreground">Status</span>
+                            <span className="text-foreground font-medium">{doc.status}</span>
+                          </div>
+                          <div className="flex items-center justify-between py-1.5 px-3 bg-muted/50 rounded">
+                            <span className="text-muted-foreground">Document ID</span>
+                            <span className="text-foreground font-mono text-xs">{doc.id}</span>
+                          </div>
+                          <div className="flex items-center justify-between py-1.5 px-3 bg-muted/50 rounded">
+                            <span className="text-muted-foreground">Source</span>
+                            <span className="text-foreground font-medium">{selectedSource.name}</span>
+                          </div>
+                        </div>
+                      </div>
                     </div>
-                    <div>
-                      <p className="text-sm font-medium text-foreground">No documents yet</p>
-                      <p className="text-xs text-muted-foreground mt-1">
-                        {selectedSource.status === "SYNCING"
-                          ? "Documents will appear here once syncing completes."
-                          : "This source has not indexed any documents yet."}
-                      </p>
-                    </div>
-                  </div>
-                ) : urlTree ? (
-                  <div className="px-4 py-3">
-                    <UrlTree
-                      node={urlTree}
-                      selectedDocId={selectedDocId}
-                      onSelectNode={(node) => {
-                        if (node.document) {
-                          setSelectedDocId(node.document.id)
-                          onSelectDocument(selectedSource.id, node.document.id, selectedSource.category)
-                        }
-                      }}
-                    />
-                  </div>
-                ) : null}
-              </ScrollArea>
-            </>
+                  </ScrollArea>
+                </>
+              )
+            })()
           ) : (
             <div className="flex flex-col items-center justify-center flex-1 gap-3 text-muted-foreground">
               <div className="flex size-14 items-center justify-center rounded-xl bg-muted">
                 <MousePointerClick className="size-6 opacity-40" />
               </div>
               <div className="text-center">
-                <p className="text-sm font-medium text-foreground">Select a source</p>
-                <p className="text-xs text-muted-foreground mt-1">Choose a source from the sidebar to view its documents.</p>
+                <p className="text-sm font-medium text-foreground">Select a document</p>
+                <p className="text-xs text-muted-foreground mt-1">Choose a document from the sidebar to view its details.</p>
               </div>
             </div>
           )}
